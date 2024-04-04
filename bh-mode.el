@@ -735,7 +735,7 @@ Prefix ARG is handled as per `delete-indentation'."
       (funcall #'electric-pair-default-inhibit ch)))
 
 ;; The main mode functions
-(defcustom bh-mode-hook '(bh-indentation-mode interactive-bh-mode)
+(defcustom bh-mode-hook '(bh-indentation-mode)
   "List of functions to run after `bh-mode' is enabled.
 
 Use to enable minor modes coming with `bh-mode' or run an
@@ -752,7 +752,6 @@ run at the same time."
              bh-indentation-mode
              highlight-uses-mode
              imenu-add-menubar-index
-             interactive-bh-mode
              turn-on-bh-unicode-input-method))
 
 ;;;###autoload
@@ -778,11 +777,6 @@ Indentation modes:
     `bh-indent-mode', Guy Lapalme
       Intelligent semi-automatic indentation.
 
-Interaction modes:
-
-    `interactive-bh-mode'
-      Interact with per-project GHCi processes through a REPL and
-      directory-aware sessions.
 
 Other modes:
 
@@ -795,13 +789,6 @@ Other modes:
 
 To activate a minor-mode, simply run the interactive command. For
 example, `M-x bh-doc-mode'. Run it again to disable it.
-
-To enable a mode for every `bh-mode' buffer, add a hook in
-your Emacs configuration. To do that you can customize
-`bh-mode-hook' or add lines to your .emacs file. For
-example, to enable `interactive-bh-mode', use the following:
-
-    (add-hook \\='bh-mode-hook \\='interactive-bh-mode)
 
 Minor modes that work well with `bh-mode':
 
@@ -856,13 +843,13 @@ Minor modes that work well with `bh-mode':
   (setq-local dabbrev-case-replace nil)
   (setq-local dabbrev-abbrev-char-regexp "\\sw\\|[.]")
   (setq bh-literate nil)
-  (add-hook 'before-save-hook 'bh-mode-before-save-handler nil t)
-  (add-hook 'after-save-hook 'bh-mode-after-save-handler nil t)
+  ;; (add-hook 'before-save-hook 'bh-mode-before-save-handler nil t)
+  ;; (add-hook 'after-save-hook 'bh-mode-after-save-handler nil t)
   ;; provide non-interactive completion function
-  (add-hook 'completion-at-point-functions
-            'bh-completions-completion-at-point
-            nil
-            t)
+  ;; (add-hook 'completion-at-point-functions
+  ;;           'bh-completions-completion-at-point
+  ;;           nil
+  ;;           t)
 
   ;; Avoid Emacs 25 bug with electric-pair inside comments
   (when (eq 25 emacs-major-version)

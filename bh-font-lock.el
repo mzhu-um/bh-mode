@@ -90,7 +90,9 @@ be disabled at that position."
   ;; spec syntax, but they are not reserved.
   ;; `_' can go in here since it has temporary word syntax.
   '("module" "rules" "package" "when"
-    "case" "class" "data" "default" "deriving" "do"
+    "case"
+    "class" "interface"
+    "data" "default" "deriving" "do"
     "else" "if" "import" "in" "infix" "infixl"
     "infixr" "instance" "let" "mdo" "newtype" "of"
     "rec" "pattern" "proc" "signature" "then" "type" "where" "_"
@@ -323,13 +325,13 @@ on an uppercase identifier."
               ((member word bh-font-lock-keywords)
                ;; Note: keywords parse as keywords only when not qualified.
                ;; GHC parses Control.let as a single but illegal lexeme.
-               (when (member word '("class" "instance" "type" "data" "newtype"))
+               (when (member word '("class" "interface" "instance" "type" "data" "newtype"))
                  (save-excursion
                    (goto-char (match-end 0))
                    (save-match-data
                      (bh-font-lock--forward-type
                       (cond
-                       ((member word '("class" "instance"))
+                       ((member word '("class" "interface" "instance"))
                         '("|"))
                        ((member word '("type"))
                         ;; Need to support 'type instance'

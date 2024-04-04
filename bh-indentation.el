@@ -74,6 +74,7 @@
   :type 'integer
   :group 'bh-indentation)
 
+
 (defcustom bh-indentation-electric-flag nil
   "Non-nil means insertion of some characters may auto reindent the line.
 If the variable `electric-indent-mode' is non-nil then this variable is
@@ -451,8 +452,8 @@ and indent when all of the following are true:
               (forward-line -1)
             (beginning-of-line)))
         (let* ((ps (syntax-ppss))
-              (start-of-comment-or-string (nth 8 ps))
-              (start-of-list-expression (nth 1 ps)))
+               (start-of-comment-or-string (nth 8 ps))
+               (start-of-list-expression (nth 1 ps)))
           (cond
            (start-of-comment-or-string
             ;; inside comment or string
@@ -461,7 +462,7 @@ and indent when all of the following are true:
             ;; inside a parenthesized expression
             (goto-char start-of-list-expression))
            ((= 0 (bh-indentation-current-indentation))
-             (throw 'return nil))))))
+            (throw 'return nil))))))
     (beginning-of-line)
     (when (bobp)
       (forward-comment (buffer-size)))))
@@ -544,10 +545,9 @@ and indent when all of the following are true:
     ("newtype"   . bh-indentation-data)
     ("import"    . bh-indentation-import)
     ("foreign"   . bh-indentation-foreign)
-    ("when"     . bh-indentation-toplevel-where)
-    ("when"     . bh-indentation-toplevel-where)
+    ("where"      . bh-indentation-toplevel-where)
     ("class"     . bh-indentation-class-declaration)
-    ("interface"  . bh-indentation-class-declaration)
+    ("interface"  . bh-indentation-interface-declaration)
     ("deriving"  . bh-indentation-deriving))
   "Alist of toplevel keywords with associated parsers.")
 
@@ -555,7 +555,7 @@ and indent when all of the following are true:
   `(("::" .
      ,(apply-partially 'bh-indentation-with-starter
                        (apply-partially 'bh-indentation-separated
-                                        'bh-indentation-type '("->" "=>"))))
+                                        'bh-indentation-type '("==>" "->" "=>"))))
     ("("  .
      ,(apply-partially 'bh-indentation-list
                        'bh-indentation-type ")" ","))
@@ -567,7 +567,7 @@ and indent when all of the following are true:
                        'bh-indentation-type "}" ",")))
   "Alist of tokens in type declarations with associated parsers.")
 
-(defconst bh-indentation-expression-list
+(defconst bh-indentation-expression-list-prime
   `(("data"    . bh-indentation-data)
     ("type"    . bh-indentation-data)
     ("newtype" . bh-indentation-data)
@@ -576,12 +576,7 @@ and indent when all of the following are true:
      ,(apply-partially 'bh-indentation-phrase
                        '(bh-indentation-declaration-layout
                          "in" bh-indentation-expression)))
-    ("module"      .
-     ,(apply-partially 'bh-indentation-with-starter
-                       'bh-indentation-expression-layout))
-    ("rules"      .
-     ,(apply-partially 'bh-indentation-with-starter
-                       'bh-indentation-expression-layout))
+    ;; module is just like "do"
     ("do"      .
      ,(apply-partially 'bh-indentation-with-starter
                        'bh-indentation-expression-layout))
@@ -608,6 +603,72 @@ and indent when all of the following are true:
     ("::"      .        bh-indentation-scoped-type)
     ("="       .
      ,(apply-partially 'bh-indentation-statement-right
+                       'bh-indentation-expression-layout))
+    ("<-"      .
+     ,(apply-partially 'bh-indentation-statement-right
+                       'bh-indentation-expression))
+    ("("       .
+     ,(apply-partially 'bh-indentation-list
+                       'bh-indentation-expression
+                       ")"
+                       '(list "," "->")))
+    ("["       .
+     ,(apply-partially 'bh-indentation-list
+                       'bh-indentation-expression "]" "," "|"))
+    ("{"       .
+     ,(apply-partially 'bh-indentation-list
+                       'bh-indentation-expression "}" ",")))
+  "Alist of keywords in expressions with associated parsers.")
+
+(defconst bh-indentation-expression-list
+  `(("data"    . bh-indentation-data)
+    ("type"    . bh-indentation-data)
+    ("newtype" . bh-indentation-data)
+    ("if"      . bh-indentation-if)
+    ("let"     .
+     ,(apply-partially 'bh-indentation-phrase
+                       '(bh-indentation-declaration-layout
+                         "in" bh-indentation-expression)))
+    ;; module is just like "do"
+    
+    ("interface"      .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-interface-definition-layout nil t))
+    ("module"      .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-expression-layout))
+    ("rules"      .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-rules-layout))
+    ("do"      .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-expression-layout))
+    ("mdo"     .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-expression-layout))
+    ("rec"     .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-expression-layout))
+    ("case"    .
+     ,(apply-partially 'bh-indentation-phrase
+                       '(bh-indentation-expression
+                         "of" bh-indentation-case-layout)))
+    ("\\"      .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-lambda-maybe-lambdacase))
+    ("proc"    .
+     ,(apply-partially 'bh-indentation-phrase
+                       '(bh-indentation-expression
+                         "->" bh-indentation-expression)))
+    ;; ("when"   .
+    ;;  ,(apply-partially 'bh-indentation-with-starter
+    ;;                    'bh-indentation-expression))
+    ("where"   .
+     ,(apply-partially 'bh-indentation-with-starter
+                       'bh-indentation-declaration-layout nil t))
+    ("::"      .        bh-indentation-scoped-type)
+    ("="       .
+     ,(apply-partially 'bh-indentation-statement-right
                        'bh-indentation-expression))
     ("<-"      .
      ,(apply-partially 'bh-indentation-statement-right
@@ -625,6 +686,15 @@ and indent when all of the following are true:
                        'bh-indentation-expression "}" ",")))
   "Alist of keywords in expressions with associated parsers.")
 
+(defun bh-indentation-expression-starter ()
+  "..."
+  (apply-partially 'bh-indentation-with-starter
+                   'bh-indentation-expression))
+
+(defun bh-indentation-expression-layoutish ()
+  "Parse layout list with expressions, such as after \"do\"."
+  (bh-indentation-layout #'bh-indentation-expression-starter))
+
 (defun bh-indentation-expression-layout ()
   "Parse layout list with expressions, such as after \"do\"."
   (bh-indentation-layout #'bh-indentation-expression))
@@ -632,6 +702,14 @@ and indent when all of the following are true:
 (defun bh-indentation-declaration-layout ()
   "Parse layout list with declarations, such as after \"where\"."
   (bh-indentation-layout #'bh-indentation-declaration))
+
+(defun bh-indentation-interface-definition-layout ()
+  "Parse layout list with declarations, such as after \"where\"."
+  (bh-indentation-layout #'bh-indentation-interface-definition))
+
+(defun bh-indentation-rules-layout ()
+  "Parse layout list with case expressions."
+  (bh-indentation-layout #'bh-indentation-case))
 
 (defun bh-indentation-case-layout ()
   "Parse layout list with case expressions."
@@ -772,6 +850,15 @@ For example
   "Parse foreign import declaration."
   (bh-indentation-with-starter (apply-partially #'bh-indentation-expression '(value operator "import"))))
 
+(defun bh-indentation-interface-declaration ()
+  "Parse interface declaration."
+  (bh-indentation-with-starter
+   (lambda ()
+     (bh-indentation-type)
+     (when (string= current-token "=")
+       (bh-indentation-with-starter
+        #'bh-indentation-declaration-layout nil)))))
+
 (defun bh-indentation-class-declaration ()
   "Parse class declaration."
   (bh-indentation-with-starter
@@ -900,6 +987,16 @@ Skip the keyword or parenthesis." ; FIXME: better description needed
         ;; otherwise fallthrough
         ))
 
+(defun bh-indentation-rule ()
+  "" ; FIXME
+  (bh-indentation-expression)
+  (cond ((eq current-token 'end-tokens)
+         (bh-indentation-add-indentation current-indent))
+        ((string= current-token "=>")
+         (bh-indentation-statement-right #'bh-indentation-expression))
+        ;; otherwise fallthrough
+        ))
+
 (defun bh-indentation-case ()
   "" ; FIXME
   (bh-indentation-expression)
@@ -925,9 +1022,13 @@ parser.  If parsing ends here, set indentation to left-indent."
     (bh-indentation-add-indentation current-indent)
     (throw 'parse-end nil))
   (funcall parser)
-  (when (equal current-token "where")
+  (cond
+   ;; ((equal current-token "when")
+   ;;  (bh-indentation-with-starter
+   ;;   #'bh-indentation-expression))
+   ((equal current-token "where")
     (bh-indentation-with-starter
-     #'bh-indentation-expression-layout nil)))
+     #'bh-indentation-expression-layout nil))))
 
 (defun bh-indentation-guard ()
   "Parse \"guard\" statement."
@@ -944,9 +1045,22 @@ parser.  If parsing ends here, set indentation to left-indent."
                       #'bh-indentation-guard "|" nil)
      nil))
   (when (eq current-token 'end-tokens)
-   (when (member following-token '("|" "=" "::" ","))
-     (bh-indentation-add-indentation current-indent)
-     (throw 'parse-end nil))))
+    (when (member following-token '("|" "=" "::" ","))
+      (bh-indentation-add-indentation current-indent)
+      (throw 'parse-end nil))))
+
+(defun bh-indentation-interface-definition ()
+  "Parse function or type declaration."
+  (bh-indentation-separated #'bh-indentation-expression-prime "," nil)
+  (when (string= current-token "|")
+    (bh-indentation-with-starter
+     (apply-partially #'bh-indentation-separated
+                      #'bh-indentation-guard "|" nil)
+     nil))
+  (when (eq current-token 'end-tokens)
+    (when (member following-token '("|" "=" "::" ","))
+      (bh-indentation-add-indentation current-indent)
+      (throw 'parse-end nil))))
 
 (defun bh-indentation-layout (parser)
   "Parse layout list, where each layout item is parsed by parser."
@@ -959,6 +1073,37 @@ parser.  If parsing ends here, set indentation to left-indent."
   (member token
           '("if" "let" "do" "case" "\\" "(" "{" "[" "::"
             value operator no-following-token)))
+
+(defun bh-indentation-expression-prime (&optional accepted-tokens)
+  "Parse an expression until an unknown token is encountered."
+  (catch 'return
+    (let ((current-indent (current-column)))
+      (unless accepted-tokens
+        (setq accepted-tokens '(value operator)))
+      (while t
+        (cond
+         ((memq current-token accepted-tokens)
+          (bh-indentation-read-next-token))
+         ((eq current-token 'end-tokens)
+          (cond ((string= following-token "where")
+                 (bh-indentation-add-where-pre-indent)) ; before a where
+                ((bh-indentation-expression-token-p following-token)
+                 ;; a normal expression can be either continued or have
+                 ;; left indent
+                 (bh-indentation-add-indentation
+                  current-indent)
+                 (bh-indentation-add-indentation
+                  left-indent)))
+          (throw 'return nil))
+         (t (let ((parser (assoc current-token
+                                 bh-indentation-expression-list-prime)))
+              (when (null parser)
+                (throw 'return nil)) ; not expression token, so exit
+              (funcall (cdr parser)) ; run parser
+
+              ;; after an 'open' expression such as 'if', exit
+              (unless (member (car parser) '("(" "[" "{" "case"))
+                (throw 'return nil)))))))))
 
 (defun bh-indentation-expression (&optional accepted-tokens)
   "Parse an expression until an unknown token is encountered."
@@ -1053,7 +1198,7 @@ l = [  1
            (setq current-indent (current-column))
            (setq starter-indent separator-column)
            (setq left-indent
-            (+ starter-indent bh-indentation-starter-offset))))))
+                 (+ starter-indent bh-indentation-starter-offset))))))
 
 (defun bh-indentation-implicit-layout-list (parser)
   "An implicit layout list, elements are parsed with PARSER.
