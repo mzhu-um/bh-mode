@@ -541,6 +541,7 @@ and indent when all of the following are true:
   `(("package"    . bh-indentation-module)
     ("signature" . bh-indentation-module)
     ("data"      . bh-indentation-data)
+    ("struct"      . bh-indentation-data)
     ("type"      . bh-indentation-data)
     ("newtype"   . bh-indentation-data)
     ("import"    . bh-indentation-import)
@@ -808,11 +809,9 @@ For example
   (when (member current-token '("<-" "="))
     (bh-indentation-statement-right #'bh-indentation-expression)))
 
-(defun bh-indentation-data ()
+(defun bh-indentation-struct ()
   "Parse data or type declaration."
   (bh-indentation-read-next-token)
-  (when (string= current-token "interface")
-    (bh-indentation-read-next-token))
   (bh-indentation-type)
   (cond ((eq current-token 'end-tokens)
          (when (member following-token '("=" "where"))
@@ -842,6 +841,31 @@ For example
           ((equal current-token "deriving")
            (bh-indentation-with-starter
             #'bh-indentation-type-1))))))
+
+(defun bh-indentation-data ()
+  "Parse data or type declaration."
+  (bh-indentation-read-next-token)
+  (when (string= current-token "interface")
+    (bh-indentation-read-next-token))
+  (bh-indentation-type)
+  (cond ((eq current-token 'end-tokens)
+         (when (member following-token '("="))
+           (bh-indentation-add-indentation current-indent)
+           (throw 'parse-end nil)))
+        ((string= current-token "=")
+         (let ((starter-indent-inside (current-column)))
+           (bh-indentation-with-starter
+            (lambda ()
+              (bh-indentation-separated
+               #'bh-indentation-expression "|")))
+           (cond
+            ((equal current-token 'end-tokens)
+             (when (string= following-token "deriving")
+               (bh-indentation-push-indentation starter-indent-inside)
+               (bh-indentation-add-left-indent)))
+            ((equal current-token "deriving")
+             (bh-indentation-with-starter
+              #'bh-indentation-type-1)))))))
 
 (defun bh-indentation-import ()
   "Parse import declaration."
