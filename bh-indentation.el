@@ -566,7 +566,7 @@ and indent when all of the following are true:
                        'bh-indentation-type "]" ","))
     ("{"  .
      ,(apply-partially 'bh-indentation-list
-                       'bh-indentation-type "}" ",")))
+                       'bh-indentation-type "}" ";")))
   "Alist of tokens in type declarations with associated parsers.")
 
 (defconst bh-indentation-expression-list-prime
@@ -619,7 +619,7 @@ and indent when all of the following are true:
                        'bh-indentation-expression "]" "," "|"))
     ("{"       .
      ,(apply-partially 'bh-indentation-list
-                       'bh-indentation-expression "}" ",")))
+                       'bh-indentation-expression "}" ";")))
   "Alist of keywords in expressions with associated parsers.")
 
 (defconst bh-indentation-expression-list
@@ -685,7 +685,7 @@ and indent when all of the following are true:
                        'bh-indentation-expression "]" "," "|"))
     ("{"       .
      ,(apply-partially 'bh-indentation-list
-                       'bh-indentation-expression "}" ",")))
+                       'bh-indentation-expression "}" ";")))
   "Alist of keywords in expressions with associated parsers.")
 
 (defun bh-indentation-expression-starter ()
